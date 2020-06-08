@@ -2,8 +2,8 @@
   <div class="page_login">
     <form @submit.prevent="login" class="form form_login" action="https://emphasoft-test-assignment.herokuapp.com/api-token-auth/" method="POST">
       <h1>Login</h1>
-      <div class="form_block">
-        <p class="form_notification is-error" v-if="login_error">Guards, there's an intruder!</p>
+      <div class="form_block" v-if="login_error">
+        <p class="form_notification is-error">{{ login_error }}</p>
       </div>
       <div class="form_block">
         <label class="form_input">
@@ -48,7 +48,12 @@ export default {
         .catch(e => {
           if(e.status === 400)
           {
-            this.login_error = true;
+            this.login_error = "Guards, there's an intruder!";
+          }
+          else
+          {
+            this.login_error = 'Error: ' + e.status;
+            this.login_error += ' ' + e.statusText;
           }
         });
     }

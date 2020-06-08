@@ -3,9 +3,11 @@
     <app-header v-if="$store.getters.isAuthenticated"/>
     <h1>Users</h1>
     <transition name="slide-fade">
-      <p @click="closeNotificationUser" class="form_notification is-success" v-if="notificationUser">{{ notificationUser }}</p>
+      <p @click="closeNotificationUser" class="form_notification form_notification_user is-success" v-if="notificationUser">{{ notificationUser }}</p>
     </transition>
-    <div class="users_filters">
+    <p class="form_notification is-error" v-if="load_error">{{ load_error }}</p>
+    <p class="form_notification is-error" v-if="user_delete_error">{{ user_delete_error }}</p>
+    <div class="users_filters" v-if="!load_error">
       <button @click="switchSortById" class="users_filters_id" :class="['is-' + this.sortById[this.sortByIdCurrent]]">
         ID
         <app-icon icon="iosArrowDown"></app-icon>
@@ -17,7 +19,7 @@
         </button>
       </label>
     </div>
-    <table class="users" :class="{'is-sorting': isSorting}">
+    <table class="users" :class="{'is-sorting': isSorting}" v-if="!load_error">
       <thead>
         <th class="users_col users_item_id users_sortById">
           <button @click="switchSortById" :class="['is-' + this.sortById[this.sortByIdCurrent]]">
@@ -44,12 +46,12 @@
             <td class="users_col users_item_lastName" data-title="Last Name">
               <span class="users_col_text">{{ user.last_name }}</span>
             </td>
-            <td class="users_col users_item_bttn_wrap">
+            <td class="users_col users_item_bttn_wrap" v-if="user.id !== 1">
               <router-link class="users_item_bttn users_item_bttn_edit" :to="{name: 'User', params: {id: user.id}}">
                 <app-icon icon="mdCreate"></app-icon>
               </router-link>
             </td>
-            <td class="users_col users_item_bttn_wrap">
+            <td class="users_col users_item_bttn_wrap" v-if="user.id !== 1">
               <button class="users_item_bttn users_item_bttn_delete" @click="deleteUser(user)">
                 <app-icon icon="mdClose"></app-icon>
               </button>
@@ -75,7 +77,7 @@ export default {
       this.users = response.data;
     })
     .catch(e => {
-      console.log(e);
+      this.load_error = e;
     })
   },
   mounted() {
@@ -92,7 +94,9 @@ export default {
       sortById: [null, 'asc', 'desc'],
       sortByIdCurrent: 1,
       userSearch: null,
-      isSorting: false
+      isSorting: false,
+      load_error: false,
+      user_delete_error: false
     }
   },
   computed: {
@@ -151,11 +155,7 @@ export default {
     },
     deleteUser(user) {
       this.isSorting = false;
-      if(user.id === 1)
-      {
-        // Prevent test_super user from accidental removal
-        return;
-      }
+
       this.$http({
         url: `https://emphasoft-test-assignment.herokuapp.com/api/v1/users/${user.id}/`,
         method: 'patch',
@@ -168,7 +168,8 @@ export default {
         this.users.splice(userIndex, 1);
       })
       .catch(e => {
-        console.log(e);
+        this.user_delete_error = e;
+        document.getElementById('app').scrollIntoView();
       })
     },
     closeNotificationUser() {
@@ -190,6 +191,10 @@ export default {
   width: 100%;
 }
 .page_users .form_notification
+{
+  margin-top: 30px;
+}
+.page_users .form_notification_user
 {
   bottom: 30px;
   cursor: pointer;
@@ -538,7 +543,7 @@ thead .users_col
 }
 @media screen and (max-width: 400px)
 {
-  .page_users .form_notification
+  .page_users .form_notification_user
   {
     width: calc(100% - 30px);
   }

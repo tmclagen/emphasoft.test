@@ -1,46 +1,54 @@
 <template>
   <div class="page_user">
     <app-header v-if="$store.getters.isAuthenticated"/>
-    <h1>{{ username_old ? 'User: ' + username_old : 'New user' }}</h1>
+    <h1 v-if="!load_error">{{ username_old ? 'User: ' + username_old : 'New user' }}</h1>
     <form @submit.prevent="saveUser" class="form form_user" action="https://emphasoft-test-assignment.herokuapp.com/api/v1/users/" method="POST">
-      <div class="form_block">
-        <label class="form_input" :class="{'is-error': username_error}">
-          <span class="form_input_title">Username</span>
-          <input type="text" placeholder="i.e. rick_sanchez" v-model="username">
-          <span class="form_input_error" v-show="username_error">{{ username_error }}</span>
-        </label>
+      <div class="form_block" v-if="load_error">
+        <p class="form_notification is-error">{{ load_error }}</p>
       </div>
-      <div class="form_block">
-        <label class="form_input" :class="{'is-error': first_name_error}">
-          <span class="form_input_title">First name</span>
-          <input type="text" placeholder="Rick" v-model="first_name">
-          <span class="form_input_error" v-show="first_name_error">{{ first_name_error }}</span>
-        </label>
+      <div class="form_block" v-if="save_error">
+        <p class="form_notification is-error">{{ save_error }}</p>
       </div>
-      <div class="form_block">
-        <label class="form_input" :class="{'is-error': last_name_error}">
-          <span class="form_input_title">Last name</span>
-          <input type="text" placeholder="Sanchez" v-model="last_name">
-          <span class="form_input_error" v-show="last_name_error">{{ last_name_error }}</span>
-        </label>
-      </div>
-      <div class="form_block">
-        <label class="form_input" :class="{'is-error': password_error}">
-          <span class="form_input_title">Password</span>
-          <input type="password" placeholder="Secret key" v-model="new_password" name="new_password" autocomplete="new-password">
-          <span class="form_input_error" v-show="password_error">{{ password_error }}</span>
-        </label>
-      </div>
-      <div class="form_block">
-        <label class="form_input" :class="{'is-error': password_compare_error}">
-          <span class="form_input_title">Repeat password</span>
-          <input type="password" placeholder="Repeat secret key" v-model="repeat_password">
-          <span class="form_input_error" v-show="password_compare_error">{{ password_compare_error }}</span>
-        </label>
-      </div>
-      <div class="form_block">
-        <div class="bttn_group bttn_group-center">
-          <button type="submit" class="bttn bttn-primary">{{ username_old ? 'Save changes' : 'Create' }}</button>
+      <div class="form_block" v-if="!load_error">
+        <div class="form_block">
+          <label class="form_input" :class="{'is-error': username_error}">
+            <span class="form_input_title">Username</span>
+            <input type="text" placeholder="i.e. rick_sanchez" v-model="username">
+            <span class="form_input_error" v-show="username_error">{{ username_error }}</span>
+          </label>
+        </div>
+        <div class="form_block">
+          <label class="form_input" :class="{'is-error': first_name_error}">
+            <span class="form_input_title">First name</span>
+            <input type="text" placeholder="Rick" v-model="first_name">
+            <span class="form_input_error" v-show="first_name_error">{{ first_name_error }}</span>
+          </label>
+        </div>
+        <div class="form_block">
+          <label class="form_input" :class="{'is-error': last_name_error}">
+            <span class="form_input_title">Last name</span>
+            <input type="text" placeholder="Sanchez" v-model="last_name">
+            <span class="form_input_error" v-show="last_name_error">{{ last_name_error }}</span>
+          </label>
+        </div>
+        <div class="form_block">
+          <label class="form_input" :class="{'is-error': password_error}">
+            <span class="form_input_title">Password</span>
+            <input type="password" placeholder="Secret key" v-model="new_password" name="new_password" autocomplete="new-password">
+            <span class="form_input_error" v-show="password_error">{{ password_error }}</span>
+          </label>
+        </div>
+        <div class="form_block">
+          <label class="form_input" :class="{'is-error': password_compare_error}">
+            <span class="form_input_title">Repeat password</span>
+            <input type="password" placeholder="Repeat secret key" v-model="repeat_password">
+            <span class="form_input_error" v-show="password_compare_error">{{ password_compare_error }}</span>
+          </label>
+        </div>
+        <div class="form_block">
+          <div class="bttn_group bttn_group-center">
+            <button type="submit" class="bttn bttn-primary">{{ username_old ? 'Save changes' : 'Create' }}</button>
+          </div>
         </div>
       </div>
     </form>
@@ -80,7 +88,9 @@ export default {
         max: 150
       },
       last_name_error: false,
-      password_compare_error: false
+      password_compare_error: false,
+      load_error: false,
+      save_error: false
     }
   },
   created() {
@@ -99,7 +109,7 @@ export default {
         this.is_active = data.is_active;
       })
       .catch(e => {
-        console.log(e);
+        this.load_error = e;
       })
     }
   },
@@ -209,13 +219,22 @@ export default {
         this.$router.push({name: 'Users'});
       })
       .catch(e => {
-        console.log(e);
+        this.save_error = e;
+        document.getElementById('app').scrollIntoView();
       });
     }
   },
   props: ['id'],
   components: {
     AppHeader
+  },
+  beforeRouteEnter (to, from, next) {
+    // Prevent entering the page, so you can't edit super user
+    if(to.params.id == 1)
+    {
+      next('/');
+    }
+    next();
   }
 }
 </script>
